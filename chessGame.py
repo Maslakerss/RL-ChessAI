@@ -16,13 +16,15 @@ class Board:
 
 
         self.board = np.zeros((8, 8),  dtype=np.str_)
+        self.futureBoard = self.board
+
         self.position = boardPosition
         self.currentMove = "W"
         self.legalMoves = list()
 
 
-        self.board_setup(boardPosition)
-        #self.begin()
+        self.board_setup(self.position)
+        self.begin()
         
 
     def board_setup(self, setup):
@@ -61,6 +63,8 @@ class Board:
         move = input(f"make move {POSITIONINDEXES[self.currentMove]}: \n")
         
         self.make_move(move)
+        print(self.board)
+
 
 
 
@@ -74,12 +78,12 @@ class Board:
             self.step()
 
 
+        #originalPosition and targetPosition
+        oPos = [8 - int(move[1]), POSITIONINDEXES[move[0].lower()]]
+        tPos = [8 - int(move[3]), POSITIONINDEXES[move[2].lower()]]
 
-        originalPosition = [8 - int(move[1]), POSITIONINDEXES[move[0].lower()]]
-        targetPosition = [8 - int(move[3]), POSITIONINDEXES[move[2].lower()]]
 
-
-        piece = self.board[originalPosition[0], originalPosition[1]]
+        piece = self.board[oPos[0], oPos[1]]
         
 
         if (self.currentMove == "W" and piece.islower()) or (self.currentMove == "C" and not piece.islower()):
@@ -87,14 +91,21 @@ class Board:
             self.step()
 
 
-        possibleMoves = self.get_moves(piece, originalPosition)
+        possibleMoves = self.get_moves(piece, oPos)
 
         print(possibleMoves)
-        print(targetPosition)
+        print(tPos)
 
-        if targetPosition in possibleMoves:
+        if tPos in possibleMoves:
             self.currentMove = NOTATIONINDEXES[self.currentMove]
+
+            tempBoard = self.board
+            tempBoard[oPos[0], oPos[1]], tempBoard[tPos[0], tPos[1]] = '.', tempBoard[oPos[0], oPos[1]]
+
+
+            self.board = tempBoard
         
+
 
     
     def get_moves(self, piece, position):
@@ -124,26 +135,49 @@ class Board:
 
     def pawn_moves(self, pawn, position):
         positionY = position[0]
-        positionX = position[1]
         direction = 1
-        pawnRange = 2
+        pawnVectors = [[1, 1], [1, -1], [1,0], [2, 0]]
         moves = list()
         
         if pawn == "P":
             direction = -1
 
             if positionY != 6:
-                pawnRange = 1
+                pawnVectors.pop()
 
         elif positionY !=1:
-            pawnRange = 1
+            pawnVectors.pop()
 
         
-        for y in range(1, pawnRange + 1):
-            moves.append([positionY + y * direction, positionX])
+        for i in range(len(pawnVectors)):
+            pawnVectors[i] = [item * direction for item in pawnVectors[i]]
 
-            if self.board[moves[y][0] , moves[y][1]] != '.':
-                break
+
+
+        for index, vector in enumerate(pawnVectors):
+            pos = [vector[0] + position[0], vector[1] + position[1]]
+
+            if not (pos[0] >=0 and pos[0] < 8) or not (pos[1] >=0 and pos[1] < 8):
+                continue
+
+
+            moves.append(pos)
+            piece = piece = self.board[pos[0], pos[1]] 
+
+
+            if index < 2:
+                if piece != '.':
+                    if (piece.isupper() and pawn.isupper()) or (piece.islower() and pawn.islower()):
+                        moves.pop()
+
+                else:
+                    moves.pop()
+
+            else:
+                if self.board[pos[0], pos[1]] != '.':
+                    moves.pop()
+                    
+                    break
 
         
         return moves
@@ -158,15 +192,23 @@ class Board:
         for Y in range(positionY, 8):
             if Y != positionY:
                 moves.append([Y, positionX])
+                piece = self.board[Y, positionX]
 
-                if self.board[Y, positionX] != '.':
+                if piece != '.':
+                    if (piece.isupper() and rook.isupper()) or (piece.islower() and rook.islower()):
+                        moves.pop()
+
                     break
 
         for Y in range(positionY, -1, -1):
             if Y != positionY:
                 moves.append([Y, positionX])
+                piece = self.board[Y, positionX]
 
-                if self.board[Y, positionX] != '.':
+                if piece != '.':
+                    if (piece.isupper() and rook.isupper()) or (piece.islower() and rook.islower()):
+                        moves.pop()
+
                     break
 
         
@@ -174,15 +216,23 @@ class Board:
         for X in range(positionX, 8):
             if X != positionX:
                 moves.append([positionY, X])
+                piece = self.board[positionY, X]
 
-                if self.board[positionY, X] != '.':
+                if piece != '.':
+                    if (piece.isupper() and rook.isupper()) or (piece.islower() and rook.islower()):
+                        moves.pop()
+
                     break
         
         for X in range(positionX, -1, -1):
             if X != positionX:
                 moves.append([positionY, X])
+                piece = self.board[positionY, X]
 
-                if self.board[positionY, X] != '.':
+                if piece != '.':
+                    if (piece.isupper() and rook.isupper()) or (piece.islower() and rook.islower()):
+                        moves.pop()
+
                     break
 
 
@@ -195,11 +245,9 @@ class Board:
 
     
     def bishop_moves(self, bishop, position):
-        positionY = position[0]
-        positionX = position[1]
-
         moves = list()
         directions = [[1, 1], [-1, -1], [1, -1], [-1, 1]]
+
 
         for direction in directions:
             newPos = [position[0], position[1]]
@@ -214,8 +262,12 @@ class Board:
 
                 
                 moves.append([newPos[0], newPos[1]])
+                piece = self.board[newPos[0], newPos[1]]
 
-                if self.board[newPos[0], newPos[1]] != '.':
+                if piece != '.':
+                    if (piece.isupper() and bishop.isupper()) or (piece.islower() and bishop.islower()):
+                        moves.pop()
+
                     break
 
         
@@ -230,8 +282,9 @@ class Board:
         moves = list()
 
         if queen == 'Q':
-            rook.capitalize()
-            bishop.capitalize()
+            rook = rook.upper()
+            bishop = bishop.upper()
+
 
         rookPositions = self.rook_moves(rook, position)
         bishopPosition = self.bishop_moves(bishop, position)
@@ -246,13 +299,56 @@ class Board:
 
 
     def king_moves(self, king, position):
-        print("nope")
+        positionY = position[0]
+        positionX = position[1]
+
+        moves = list()
+
+
+        for y in range(1, 4):
+            for x in range(1, 4):
+                pos = [(y -2) + positionY, (x -2) + positionX]
+
+                if not (pos[0] >= 0 and pos[0] < 8) or not (pos[1] >= 0 and pos[1] < 8):
+                    continue
+                
+                if pos == position:
+                    continue
+
+
+                moves.append(pos)
+                piece = self.board[pos[0], pos[1]]
+
+
+                if piece != '.':
+                    if piece.isupper() and king.isupper() or piece.islower() and king.islower():
+                        moves.pop()
+
+
+        return moves
+
 
 
 
 board = Board()
 
-#print(board.pawn_moves("P", [1, 3]))
-print(board.rook_moves("r", [5, 5]))
-print(board.bishop_moves("b", [5,5]))
-#print(board.queen_moves("q", [5,5]))
+#print(board.pawn_moves("P", [6, 0]))
+#print(board.rook_moves("r", [5, 5]))
+#print(board.bishop_moves("b", [5,5]))
+#print(board.queen_moves("Q", [5,5]))
+#print(board.king_moves("K", [4, 1]))
+
+print("__________________________________")
+newBoard = np.zeros((64), dtype=np.str_)
+moves = board.queen_moves("Q", [5,5])
+
+for x in range(len(newBoard)):
+    newBoard[x] = '.'
+
+newBoard = newBoard.reshape((8, 8))
+
+for move in moves:
+    newBoard[move[0], move[1]] = '#' 
+
+
+print(newBoard)
