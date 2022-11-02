@@ -11,8 +11,10 @@ class Board:
     def __init__(self, boardPosition=""):
         super(Board, self).__init__()
 
+        #normalPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+
         if not boardPosition:
-            boardPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+            boardPosition = "rnbqr3/pppp1p1p/1b3n1k/3P2K1/8/2NB1N2/PPPB2pP/R2Q1R2"
 
 
         self.board = np.zeros((8, 8),  dtype=np.str_)
@@ -123,13 +125,15 @@ class Board:
         return moves[holdPiece.lower()](piece, position)
         
 
+
     def get_all_moves(self):
         print("For now")
 
 
+
     def is_check(self):
-        allPieces = ["q", "n", "p", "k"]
-        enemyPieces = ["Q", "N", "P", "K"] 
+        allPieces = ["n", "p", "k", "r", "b", "q"]
+        enemyPieces = ["N", "P", "K", "R", "B", "Q"] 
         kingPos = self.get_king_pos()
 
         if self.currentMove == "W":
@@ -137,30 +141,45 @@ class Board:
                 allPieces[x], enemyPieces[x] = enemyPieces[x], allPieces[x]
 
 
-        queenMoves = self.queen_moves(allPieces[0], kingPos)
-        knightMoves = self.knight_moves(allPieces[1], kingPos)
-        pawnMoves = self.pawn_moves(allPieces[2], kingPos, king_check=True)
-        kingMoves = self.pawn_moves(allPieces[3], kingPos)
-
-
-
-        for move in queenMoves:
-            if move == enemyPieces[0]:
-                return True
+        knightMoves = self.knight_moves(allPieces[0], kingPos)
+        pawnMoves = self.pawn_moves(allPieces[1], kingPos, king_check=True)
+        kingMoves = self.king_moves(allPieces[2], kingPos)
+        rookMoves = self.rook_moves(allPieces[3], kingPos)
+        bishopMoves = self.bishop_moves(allPieces[4], kingPos)
 
         
         for move in knightMoves:
-            if move == enemyPieces[1]:
+            piece = self.board[move[0], move[1]]
+
+            if piece == enemyPieces[0]:
                 return True
 
 
         for move in pawnMoves:
-            if move == enemyPieces[2]:
+            piece = self.board[move[0], move[1]]
+
+            if piece == enemyPieces[1]:
                 return True
 
 
         for move in kingMoves:
-            if move == enemyPieces[3]:
+            piece = self.board[move[0], move[1]]
+
+            if piece == enemyPieces[2]:
+                return True
+
+        
+        for move in rookMoves:
+            piece = self.board[move[0], move[1]]
+
+            if piece == enemyPieces[5] or piece == enemyPieces[3]:
+                return True
+
+
+        for move in bishopMoves:
+            piece = self.board[move[0], move[1]]
+
+            if piece == enemyPieces[5] or piece == enemyPieces[4]:
                 return True
 
         
