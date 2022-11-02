@@ -24,7 +24,7 @@ class Board:
 
 
         self.board_setup(self.position)
-        self.begin()
+        #self.begin()
         
 
     def board_setup(self, setup):
@@ -123,17 +123,77 @@ class Board:
         return moves[holdPiece.lower()](piece, position)
         
 
+    def get_all_moves(self):
+        print("For now")
+
+
+    def is_check(self):
+        allPieces = ["q", "n", "p", "k"]
+        enemyPieces = ["Q", "N", "P", "K"] 
+        kingPos = self.get_king_pos()
+
+        if self.currentMove == "W":
+            for x in range(len(allPieces)):
+                allPieces[x], enemyPieces[x] = enemyPieces[x], allPieces[x]
+
+
+        queenMoves = self.queen_moves(allPieces[0], kingPos)
+        knightMoves = self.knight_moves(allPieces[1], kingPos)
+        pawnMoves = self.pawn_moves(allPieces[2], kingPos, king_check=True)
+        kingMoves = self.pawn_moves(allPieces[3], kingPos)
+
+
+
+        for move in queenMoves:
+            if move == enemyPieces[0]:
+                return True
+
+        
+        for move in knightMoves:
+            if move == enemyPieces[1]:
+                return True
+
+
+        for move in pawnMoves:
+            if move == enemyPieces[2]:
+                return True
+
+
+        for move in kingMoves:
+            if move == enemyPieces[3]:
+                return True
+
+        
+        return False
+
+
 
     def is_checkmate(self):
         return False
-    
+
+
     def is_stalemate(self):
         return False
 
 
 
 
-    def pawn_moves(self, pawn, position):
+    def get_king_pos(self):
+        tempBoard = self.board
+
+        king = 'k'
+
+        if self.currentMove == "W":
+            king = king.upper()
+
+        for y, row in enumerate(tempBoard):
+            for x, tile in enumerate(row):
+                if tile == king:
+                    return [y, x]
+
+
+
+    def pawn_moves(self, pawn, position, king_check=False):
         positionY = position[0]
         direction = 1
         pawnVectors = [[1, 1], [1, -1], [1,0], [2, 0]]
@@ -166,7 +226,7 @@ class Board:
 
 
             if index < 2:
-                if piece != '.':
+                if not (piece == '.'):
                     if (piece.isupper() and pawn.isupper()) or (piece.islower() and pawn.islower()):
                         moves.pop()
 
@@ -174,7 +234,7 @@ class Board:
                     moves.pop()
 
             else:
-                if self.board[pos[0], pos[1]] != '.':
+                if self.board[pos[0], pos[1]] != '.' or king_check:
                     moves.pop()
                     
                     break
@@ -241,7 +301,27 @@ class Board:
 
 
     def knight_moves(self, knight, position):
-        print("no")
+        moves = list()
+        moveVectors = [[2, 1], [2, -1], [-2, 1], [-2, -1], [-1, -2], [1, -2], [-1, 2], [1, 2]]
+
+        for vector in moveVectors:
+            pos = [position[0] + vector[0], position[1] + vector[1]]
+
+            if not (pos[0] >= 0 and pos[0] < 8) or not(pos[1] >=0 and pos[1] < 8):
+                continue
+
+            piece = self.board[pos[0], pos[1]]
+
+            if piece != '.':
+                if piece.isupper() and knight.isupper() or piece.islower() and knight.islower():
+                    continue
+            
+            
+            moves.append(pos)
+
+        
+        return moves
+
 
     
     def bishop_moves(self, bishop, position):
@@ -261,7 +341,7 @@ class Board:
                 newPos[1] += direction[1]
 
                 
-                moves.append([newPos[0], newPos[1]])
+                moves.append(newPos)
                 piece = self.board[newPos[0], newPos[1]]
 
                 if piece != '.':
@@ -338,9 +418,13 @@ board = Board()
 #print(board.queen_moves("Q", [5,5]))
 #print(board.king_moves("K", [4, 1]))
 
+#print(board.get_king_pos())
+print(board.is_check())
+
 print("__________________________________")
 newBoard = np.zeros((64), dtype=np.str_)
-moves = board.queen_moves("Q", [5,5])
+moves = board.knight_moves("N", [5,3])
+
 
 for x in range(len(newBoard)):
     newBoard[x] = '.'
