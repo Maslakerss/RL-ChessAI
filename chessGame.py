@@ -14,7 +14,7 @@ class Board:
         #normalPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
         if not boardPosition:
-            boardPosition = "rnbqr3/pppp1p1p/1b3n1k/3P2K1/8/2NB1N2/PPPB2pP/R2Q1R2"
+            boardPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
 
         self.board = np.zeros((8, 8),  dtype=np.str_)
@@ -23,10 +23,10 @@ class Board:
         self.position = boardPosition
         self.currentMove = "W"
         self.legalMoves = list()
+        self.canMakeMove = True
 
 
         self.board_setup(self.position)
-        #self.begin()
         
 
     def board_setup(self, setup):
@@ -84,19 +84,18 @@ class Board:
         oPos = [8 - int(move[1]), POSITIONINDEXES[move[0].lower()]]
         tPos = [8 - int(move[3]), POSITIONINDEXES[move[2].lower()]]
 
+        print(oPos, tPos)
+
 
         piece = self.board[oPos[0], oPos[1]]
         
 
         if (self.currentMove == "W" and piece.islower()) or (self.currentMove == "C" and not piece.islower()):
-            print("that move is invalid")
             self.step()
 
 
         possibleMoves = self.get_moves(piece, oPos)
 
-        print(possibleMoves)
-        print(tPos)
 
         if tPos in possibleMoves:
             self.currentMove = NOTATIONINDEXES[self.currentMove]
@@ -107,6 +106,20 @@ class Board:
 
             self.board = tempBoard
         
+
+
+    def check_board_as_phantom(self, move):
+        tempBoard = self.board
+        pieceOPos, pieceTPos = tempBoard[move[0], move[1]] , tempBoard[move[2], move[3]]
+
+
+        tempBoard[move[0], move[1]] , tempBoard[move[2], move[3]] = '.', tempBoard[move[0], move[1]]
+        self.board = tempBoard
+
+        isCheck = self.is_check()
+
+        tempBoard[move[0], move[1]] , tempBoard[move[2], move[3]] = pieceOPos, pieceTPos
+        return isCheck
 
 
     
@@ -127,7 +140,35 @@ class Board:
 
 
     def get_all_moves(self):
-        print("For now")
+        self.canMakeMove = False
+
+        tempBoard = self.board
+        allMoves = list()
+        sum = 0
+
+        for y, row in enumerate(tempBoard):
+            for x, piece in enumerate(row):
+                if piece != '.':
+                    if (piece.isupper() and self.currentMove == "W") or (piece.islower() and self.currentMove == "C"):
+                        moves = self.get_moves(piece, [y, x])        
+
+
+                        for move in moves:
+                            actualMove = [y, x]
+                            actualMove.append(move[0])
+                            actualMove.append(move[1])
+
+
+                            isCheck = self.check_board_as_phantom(actualMove)
+
+
+                            if not isCheck:
+                                allMoves.append(actualMove)
+
+
+        self.canMakeMove = True
+
+        return allMoves
 
 
 
@@ -195,6 +236,9 @@ class Board:
         return False
 
 
+
+    def get_string_move_format(self, pos):
+        return NOTATIONINDEXES[pos[0]] + str(8 - pos[1]) + NOTATIONINDEXES[pos[2]] + str(8 - pos[3])
 
 
     def get_king_pos(self):
@@ -438,7 +482,7 @@ board = Board()
 #print(board.king_moves("K", [4, 1]))
 
 #print(board.get_king_pos())
-print(board.is_check())
+#print(board.is_check())
 
 print("__________________________________")
 newBoard = np.zeros((64), dtype=np.str_)
@@ -454,4 +498,9 @@ for move in moves:
     newBoard[move[0], move[1]] = '#' 
 
 
-print(newBoard)
+allMoves = board.get_all_moves()
+print(len(allMoves))
+    
+
+for move in allMoves:
+    print(move)
